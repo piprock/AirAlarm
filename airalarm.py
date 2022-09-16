@@ -174,7 +174,7 @@ def Refresh():
             if Is_Alarm and r.get() == 1 and not SirenaPlayed and not SirenaNowPlaying: # Тривога
                 SirenaPlay("Sound/sirena.mp3", int(t1*60))
             elif not Is_Alarm and r.get() == 1 and SirenaPlayed and not SirenaNowPlaying: # Відбій
-                SirenaPlay("Sound/vdbj.mp3", 14)
+                SirenaPlay("Sound/vdbj.mp3", 21)
             elif Is_Alarm and not SirenaNowPlaying and r.get() == 2: # Сирена
                 SirenaPlay("Sound/sirena.mp3")
             elif not Is_Alarm and SirenaNowPlaying and r.get() == 2:
@@ -184,16 +184,16 @@ def Refresh():
     except:
         print("Помилка з'єднання!!")
     if SirenaNowPlaying and r.get() == 1 and NowInSec() > end:
-                pygame.mixer.music.stop()
-                SirenaNowPlaying = False
-                SirenaPlayed = not SirenaPlayed
+        pygame.mixer.music.stop()
+        SirenaNowPlaying = False
+        SirenaPlayed = not SirenaPlayed
     if datetime.datetime.now().hour == 9 and datetime.datetime.now().minute == 0 and not MusicPlaying and not SirenaNowPlaying and c.get() == 1:
-                MusicPlaying = True
-                pygame.mixer.music.stop()
-                pygame.mixer.music.load("Sound/hvilina.mp3")
-                pygame.mixer.music.play()
-                pygame.mixer.music.queue("Sound/gimn.mp3")
-                root.after(61000, MusicOff)
+        MusicPlaying = True
+        pygame.mixer.music.stop()
+        pygame.mixer.music.load("Sound/hvilina.mp3")
+        pygame.mixer.music.play()
+        pygame.mixer.music.queue("Sound/gimn.mp3")
+        root.after(61000, MusicOff)
 
 
     root.after(2000, Refresh)
