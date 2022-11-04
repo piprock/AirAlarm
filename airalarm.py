@@ -3,8 +3,8 @@ from tkinter import ttk
 import datetime
 import pygame
 import subprocess
-import getpass
-import os
+
+import autostart
 
 
 def ComboChange(event):
@@ -26,22 +26,11 @@ def save():
         print(settings, file=f)
 
 
-def add_to_startup():
-    USER_NAME = getpass.getuser()
-    file_path = os.getcwd()
-    bat_path = r'C:\Users\%s\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup' % USER_NAME
-    with open(bat_path + '\\' + "openAiralarm.bat", "w+") as bat_file:
-        bat_file.write('chcp 1251\n')
-        bat_file.write('cd %s\n' % file_path)
-        bat_file.write(r'start %s' % "airalarm.py")
-
-
 def autoStartUp():
     if w.get() == 0:
-        USER_NAME = getpass.getuser()
-        os.remove(r'C:\Users\%s\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\openAiralarm.bat' % USER_NAME)
+        autostart.disable()
     elif w.get() == 1:
-        add_to_startup()
+        autostart.enable()
     save()
 
 
@@ -105,7 +94,6 @@ def GetTime(entr1):
     except:
         but.config(text="Помилка")
         root.after(400, lambda : but.config(text="Зберегти"))
-
 
 
 def ChangeTimeAlarm():
