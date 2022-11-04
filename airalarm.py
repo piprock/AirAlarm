@@ -9,6 +9,9 @@ import pygame
 import autostart
 
 
+SETTINGS_PATH = "data/settings.txt"
+
+
 def ComboChange(event):
     global city
     city = regions_list.get()
@@ -16,9 +19,9 @@ def ComboChange(event):
 
 
 def save():
-    with open("settings.txt", "r", encoding="utf-8") as f:
+    with open(SETTINGS_PATH, "r", encoding="utf-8") as f:
         settings = eval(f.read())
-    with open("settings.txt", "w", encoding="utf-8") as f:
+    with open(SETTINGS_PATH, "w", encoding="utf-8") as f:
         settings["city"] = city
         settings["c"] = c.get()
         settings["r"] = r.get()
@@ -128,10 +131,10 @@ root.resizable(width=False, height=False)
 pygame.init()
 
 
-with open("locations_list/regions.txt", "r", encoding="utf-8") as f:
+with open("data/locations_list/regions.txt", "r", encoding="utf-8") as f:
     regions = sorted(eval(f.read()))
 
-with open("settings.txt", "r", encoding="utf-8") as f:
+with open(SETTINGS_PATH, "r", encoding="utf-8") as f:
     settings = eval(f.read())
 
 
