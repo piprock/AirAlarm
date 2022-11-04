@@ -1,8 +1,10 @@
+import datetime
+import json
 from tkinter import *
 from tkinter import ttk
-import datetime
+from urllib.request import Request, urlopen
+
 import pygame
-import subprocess
 
 import autostart
 
@@ -68,14 +70,15 @@ def AlarmNotification(event):
 
 
 def IsAlarm(City):
-    cmd = "curl https://alerts.com.ua/api/states -H \"X-API-Key: 95d44c372a0ff7220475e373ece7e0ac3362bfdc\""
-    returned_output = subprocess.check_output(cmd, shell=True)
-    cities = returned_output.decode("utf-8")[:-1]
-    cities = cities.replace("true", "True")
-    cities = cities.replace("false", "False")
-    cities = eval(cities)["states"]
-    for i in cities:
-        if i["name"] == City and i["alert"] == True:
+    request = Request(
+        "https://alerts.com.ua/api/states",
+        headers={"X-API-Key": "95d44c372a0ff7220475e373ece7e0ac3362bfdc"},
+    )
+    with urlopen(request) as response:
+        data = json.load(response)
+    states = data['states']
+    for state in states:
+        if state["name"] == City and state["alert"]:
             return True
     return False
 
