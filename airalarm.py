@@ -1,5 +1,6 @@
 import datetime
 import json
+from pathlib import Path
 from tkinter import *
 from tkinter import ttk
 from urllib.request import Request, urlopen
@@ -9,7 +10,8 @@ import pygame
 import autostart
 
 
-SETTINGS_PATH = "data/settings.txt"
+BASE_PATH = Path(__file__).parent
+SETTINGS_PATH = BASE_PATH / "data/settings.txt"
 
 
 def ComboChange(event):
@@ -19,9 +21,9 @@ def ComboChange(event):
 
 
 def save():
-    with open(SETTINGS_PATH, "r", encoding="utf-8") as f:
+    with SETTINGS_PATH.open("r", encoding="utf-8") as f:
         settings = eval(f.read())
-    with open(SETTINGS_PATH, "w", encoding="utf-8") as f:
+    with SETTINGS_PATH.open("w", encoding="utf-8") as f:
         settings["city"] = city
         settings["c"] = c.get()
         settings["r"] = r.get()
@@ -131,10 +133,10 @@ root.resizable(width=False, height=False)
 pygame.init()
 
 
-with open("data/locations_list/regions.txt", "r", encoding="utf-8") as f:
+with (BASE_PATH / "data/locations_list/regions.txt").open("r", encoding="utf-8") as f:
     regions = sorted(eval(f.read()))
 
-with open(SETTINGS_PATH, "r", encoding="utf-8") as f:
+with SETTINGS_PATH.open("r", encoding="utf-8") as f:
     settings = eval(f.read())
 
 
