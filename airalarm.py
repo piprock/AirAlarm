@@ -10,8 +10,8 @@ import pygame
 import autostart
 
 
-BASE_PATH = Path(__file__).parent
-SETTINGS_PATH = BASE_PATH / "data/settings.txt"
+BASE_PATH = Path(__file__).parent / 'data'
+SETTINGS_PATH = BASE_PATH / "settings.txt"
 
 
 def ComboChange(event):
@@ -133,7 +133,7 @@ root.resizable(width=False, height=False)
 pygame.init()
 
 
-with (BASE_PATH / "data/locations_list/regions.txt").open("r", encoding="utf-8") as f:
+with (BASE_PATH / "locations_list/regions.txt").open("r", encoding="utf-8") as f:
     regions = sorted(eval(f.read()))
 
 with SETTINGS_PATH.open("r", encoding="utf-8") as f:
@@ -178,11 +178,11 @@ def Refresh():
             Is_Alarm = IsAlarm(city)
             print(Is_Alarm,r.get() == 1,not SirenaPlayed,not SirenaNowPlaying)
             if Is_Alarm and r.get() == 1 and not SirenaPlayed and not SirenaNowPlaying: # Тривога
-                SirenaPlay("Sound/sirena.mp3", int(t1*60))
+                SirenaPlay(BASE_PATH / "Sound/sirena.mp3", int(t1*60))
             elif not Is_Alarm and r.get() == 1 and SirenaPlayed and not SirenaNowPlaying: # Відбій
-                SirenaPlay("Sound/vdbj.mp3", 21)
+                SirenaPlay(BASE_PATH / "Sound/vdbj.mp3", 21)
             elif Is_Alarm and not SirenaNowPlaying and r.get() == 2: # Сирена
-                SirenaPlay("Sound/sirena.mp3")
+                SirenaPlay(BASE_PATH / "Sound/sirena.mp3")
             elif not Is_Alarm and SirenaNowPlaying and r.get() == 2:
                 pygame.mixer.music.stop()
                 SirenaNowPlaying = False
@@ -196,9 +196,9 @@ def Refresh():
     if datetime.datetime.now().hour == 9 and datetime.datetime.now().minute == 0 and not MusicPlaying and not SirenaNowPlaying and c.get() == 1:
         MusicPlaying = True
         pygame.mixer.music.stop()
-        pygame.mixer.music.load("Sound/hvilina.mp3")
+        pygame.mixer.music.load(BASE_PATH / "Sound/hvilina.mp3")
         pygame.mixer.music.play()
-        pygame.mixer.music.queue("Sound/gimn.mp3")
+        pygame.mixer.music.queue(BASE_PATH / "Sound/gimn.mp3")
         root.after(61000, MusicOff)
 
     root.after(2000, Refresh)

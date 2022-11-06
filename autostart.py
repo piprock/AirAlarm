@@ -2,8 +2,9 @@ __all__ = ('enable', 'disable')
 
 import getpass
 import os
+import shutil
 import sys
-
+from pathlib import Path
 
 if sys.platform == 'win32':
     def enable():
@@ -20,6 +21,15 @@ if sys.platform == 'win32':
         path = r'C:\Users\%s\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\openAiralarm.bat'
         os.remove(path % USER_NAME)
 elif sys.platform == 'linux':
-    raise NotImplementedError()
+    APPS_PATH = Path.home() / '.local/share/applications'
+    AUTOSTART_PATH = Path.home() / '.config/autostart'
+    FILENAME = 'airalarm.desktop'
+
+    def enable():
+        shutil.copy(APPS_PATH / FILENAME, AUTOSTART_PATH)
+
+    def disable():
+        path = AUTOSTART_PATH / FILENAME
+        path.unlink()
 else:
     raise NotImplementedError()
