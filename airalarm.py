@@ -1,20 +1,29 @@
+import datetime
+import json
+from pathlib import Path
 from tkinter import *
 from tkinter import ttk
-import datetime
+from urllib.request import Request, urlopen
+
 import pygame
-import subprocess
-import getpass
-import os
+
+import autostart
+
+
+BASE_PATH = Path(__file__).parent / 'data'
+SETTINGS_PATH = BASE_PATH / "settings.txt"
+
 
 def ComboChange(event):
     global city
     city = regions_list.get()
     save()
 
+
 def save():
-    with open("settings.txt", "r", encoding="utf-8") as f:
+    with SETTINGS_PATH.open("r", encoding="utf-8") as f:
         settings = eval(f.read())
-    with open("settings.txt", "w", encoding="utf-8") as f:
+    with SETTINGS_PATH.open("w", encoding="utf-8") as f:
         settings["city"] = city
         settings["c"] = c.get()
         settings["r"] = r.get()
@@ -23,22 +32,14 @@ def save():
         settings["t1"] = t1
         print(settings, file=f)
 
-def add_to_startup():
-    USER_NAME = getpass.getuser()
-    file_path = os.getcwd()
-    bat_path = r'C:\Users\%s\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup' % USER_NAME
-    with open(bat_path + '\\' + "openAiralarm.bat", "w+") as bat_file:
-        bat_file.write('chcp 1251\n')
-        bat_file.write('cd %s\n' % file_path)
-        bat_file.write(r'start %s' % "airalarm.py")
 
 def autoStartUp():
     if w.get() == 0:
-        USER_NAME = getpass.getuser()
-        os.remove(r'C:\Users\%s\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\openAiralarm.bat' % USER_NAME)
+        autostart.disable()
     elif w.get() == 1:
-        add_to_startup()
+        autostart.enable()
     save()
+
 
 def AlarmNotification(event):
     global alarmNotification, SirenaPlayed, SirenaNowPlaying, MusicPlaying
@@ -72,20 +73,24 @@ def AlarmNotification(event):
         autoOnCheckBox.config(state="normal")
         autoStartUpCheckBox.config(state="normal")
 
+
 def IsAlarm(City):
-    cmd = "curl https://alerts.com.ua/api/states -H \"X-API-Key: 95d44c372a0ff7220475e373ece7e0ac3362bfdc\""
-    returned_output = subprocess.check_output(cmd, shell=True)
-    cities = returned_output.decode("utf-8")[:-1]
-    cities = cities.replace("true", "True")
-    cities = cities.replace("false", "False")
-    cities = eval(cities)["states"]
-    for i in cities:
-        if i["name"] == City and i["alert"] == True:
+    request = Request(
+        "https://alerts.com.ua/api/states",
+        headers={"X-API-Key": "95d44c372a0ff7220475e373ece7e0ac3362bfdc"},
+    )
+    with urlopen(request) as response:
+        data = json.load(response)
+    states = data['states']
+    for state in states:
+        if state["name"] == City and state["alert"]:
             return True
     return False
 
+
 def NowInSec():
     return int((datetime.datetime.now() - datetime.datetime(1, 1, 1, 0, 0)).total_seconds())
+
 
 def GetTime(entr1):
     global t1
@@ -97,7 +102,6 @@ def GetTime(entr1):
     except:
         but.config(text="Помилка")
         root.after(400, lambda : but.config(text="Зберегти"))
-
 
 
 def ChangeTimeAlarm():
@@ -122,18 +126,17 @@ def ChangeTimeAlarm():
 
     app.mainloop()
 
+
 root = Tk()
-root.geometry("600x450")
 root.title("Повітряна тривога")
-root.resizable(0,0)
+root.resizable(width=False, height=False)
 pygame.init()
 
 
-
-with open("locations_list/regions.txt", "r", encoding="utf-8") as f:
+with (BASE_PATH / "locations_list/regions.txt").open("r", encoding="utf-8") as f:
     regions = sorted(eval(f.read()))
 
-with open("settings.txt", "r", encoding="utf-8") as f:
+with SETTINGS_PATH.open("r", encoding="utf-8") as f:
     settings = eval(f.read())
 
 
@@ -153,6 +156,7 @@ MusicPlaying = False
 t1 = settings["t1"]
 end = 0
 
+
 def SirenaPlay(link, sec=1, ends=0):
     global SirenaNowPlaying, end
     pygame.mixer.music.stop()
@@ -161,9 +165,11 @@ def SirenaPlay(link, sec=1, ends=0):
     SirenaNowPlaying = True
     end = NowInSec() + sec
 
+
 def MusicOff():
     global MusicPlaying
     MusicPlaying = False
+
 
 def Refresh():
     global SirenaNowPlaying, SirenaPlayed, end, MusicPlaying
@@ -172,11 +178,11 @@ def Refresh():
             Is_Alarm = IsAlarm(city)
             print(Is_Alarm,r.get() == 1,not SirenaPlayed,not SirenaNowPlaying)
             if Is_Alarm and r.get() == 1 and not SirenaPlayed and not SirenaNowPlaying: # Тривога
-                SirenaPlay("Sound/sirena.mp3", int(t1*60))
+                SirenaPlay(BASE_PATH / "Sound/sirena.mp3", int(t1*60))
             elif not Is_Alarm and r.get() == 1 and SirenaPlayed and not SirenaNowPlaying: # Відбій
-                SirenaPlay("Sound/vdbj.mp3", 21)
+                SirenaPlay(BASE_PATH / "Sound/vdbj.mp3", 21)
             elif Is_Alarm and not SirenaNowPlaying and r.get() == 2: # Сирена
-                SirenaPlay("Sound/sirena.mp3")
+                SirenaPlay(BASE_PATH / "Sound/sirena.mp3")
             elif not Is_Alarm and SirenaNowPlaying and r.get() == 2:
                 pygame.mixer.music.stop()
                 SirenaNowPlaying = False
@@ -190,11 +196,10 @@ def Refresh():
     if datetime.datetime.now().hour == 9 and datetime.datetime.now().minute == 0 and not MusicPlaying and not SirenaNowPlaying and c.get() == 1:
         MusicPlaying = True
         pygame.mixer.music.stop()
-        pygame.mixer.music.load("Sound/hvilina.mp3")
+        pygame.mixer.music.load(BASE_PATH / "Sound/hvilina.mp3")
         pygame.mixer.music.play()
-        pygame.mixer.music.queue("Sound/gimn.mp3")
+        pygame.mixer.music.queue(BASE_PATH / "Sound/gimn.mp3")
         root.after(61000, MusicOff)
-
 
     root.after(2000, Refresh)
 
@@ -205,17 +210,13 @@ locFrame.grid(row=0, column=0, padx=10, pady=10, sticky="W")
 alarmFrame.grid(row=1, column=0, padx=10, pady=10, sticky="W")
 
 lb_region = Label(locFrame, text="Область", font="Impact 14")
-lb_space1 = Label(alarmFrame, text=" ", font="Arial 10")
 lb_timeAlarm = Label(alarmFrame, text="Довжина сирени", font="Impact 16")
-lb_space2 = Label(alarmFrame, text=" ", font="Arial 10")
 lb_additionalFunc = Label(alarmFrame, text="Додаткові функції", font="Impact 16")
 lb_copyright = Label(root, text="© 2022, Кір'янчук Юрій")
 lb_region.grid(row=0, column=0, sticky="W", padx=5)
-lb_space1.grid(row=1, column=0, sticky="W", padx=5)
-lb_timeAlarm.grid(row=2, column=0, sticky="W", padx=5)
-lb_space2.grid(row=5, column=0, sticky="W", padx=5)
-lb_additionalFunc.grid(row=6, column=0, sticky="W", padx=5)
-lb_copyright.place(relx=0.02,rely=0.98,anchor="sw")
+lb_timeAlarm.grid(row=2, column=0, sticky="W", padx=5, pady=(30, 0))
+lb_additionalFunc.grid(row=6, column=0, sticky="W", padx=5, pady=(30, 0))
+lb_copyright.grid(row=2, column=0, padx=10, pady=(50, 10), sticky="W")
 
 regions_list = ttk.Combobox(locFrame, state="readonly", width=len(max(regions, key=len)), font="Arial 14", values=regions)
 regions_list.grid(row=0, column=1, sticky="W", padx=5)
