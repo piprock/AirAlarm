@@ -1,3 +1,4 @@
+set -e
 pyinstaller --add-data="data:data" --add-data "linux/megaphone.svg:." airalarm.py
 cp linux/root/* dist
 cp LICENSE dist
