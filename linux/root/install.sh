@@ -2,7 +2,7 @@ set -e
 SCRIPT_DIR=$(dirname -- "$(readlink -f -- "$BASH_SOURCE")")
 LOCAL_DIR="$HOME/.local"
 OPT_DIR="$LOCAL_DIR/opt"
-mkdir -p OPT_DIR
+mkdir -p "$OPT_DIR"
 APP_NAME=airalarm
 APP_DIR="$OPT_DIR/$APP_NAME"
 cp -r "$SCRIPT_DIR/$APP_NAME" "$APP_DIR"
