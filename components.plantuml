@@ -1,0 +1,44 @@
+@startuml
+cloud {
+    [Джерело] as source
+    note as source_note
+        Сторонній ресурс,
+        з якого береться
+        інформація про
+        повітряну тривогу
+    end note
+}
+
+() API as api
+[ОС] as os
+() Автозапуск as autorun
+[Контроллер] as controller
+
+note as api_note
+    Програмний інтерфейс для
+    доступу до джерела інформації
+end note
+note as autorun_note
+    Інструменти ОС для автозапуску
+end note
+note as controller_note
+    Основний елемент
+    програми, який управляє
+    увімкненням/вимкненням
+    сигналу тривоги
+end note
+note as os_note
+    Операційна система,
+    на якій працює програма
+end note
+
+os -- os_note
+os - autorun
+autorun_note -- autorun
+autorun )- controller
+controller -- controller_note
+controller -( api
+api_note -- api
+api - source
+source -- source_note
+@enduml

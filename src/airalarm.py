@@ -1,5 +1,7 @@
 import datetime
 import json
+import logging
+import logging.handlers
 from pathlib import Path
 from tkinter import *
 from tkinter import ttk
@@ -9,8 +11,14 @@ import pygame
 
 import autostart
 
-
-BASE_PATH = Path(__file__).parent / 'data'
+LOG_FILENAME = "airalarm.log"
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+handler = logging.handlers.RotatingFileHandler(LOG_FILENAME, maxBytes=10*1024*1024, backupCount=5)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+BASE_PATH = Path(__file__).parent / "data"
 SETTINGS_PATH = BASE_PATH / "settings.txt"
 
 
@@ -26,7 +34,7 @@ def save():
     with SETTINGS_PATH.open("w", encoding="utf-8") as f:
         settings["city"] = city
         settings["c"] = c.get()
-        settings["r"] = r.get()
+        settings["r"] = mode.get()
         settings["q"] = q.get()
         settings["w"] = w.get()
         settings["t1"] = t1
@@ -140,8 +148,8 @@ with SETTINGS_PATH.open("r", encoding="utf-8") as f:
     settings = eval(f.read())
 
 
-r = IntVar()
-r.set(settings["r"])
+mode = IntVar()
+mode.set(settings["r"])
 c = IntVar()
 c.set(settings["c"])
 q = IntVar()
@@ -176,20 +184,23 @@ def Refresh():
     try:
         if alarmNotification:
             Is_Alarm = IsAlarm(city)
-            print(Is_Alarm,r.get() == 1,not SirenaPlayed,not SirenaNowPlaying)
-            if Is_Alarm and r.get() == 1 and not SirenaPlayed and not SirenaNowPlaying: # Тривога
+            logger.debug("Are authorities signalling about air alarm now: %s", Is_Alarm)
+            logger.debug("Playing siren in the beginning and in the end mode is enabled: %s", mode.get() == 1)
+            logger.debug("Has siren played already: %s", SirenaPlayed)
+            logger.debug("Is siren playing now: %s", SirenaNowPlaying)
+            if Is_Alarm and mode.get() == 1 and not SirenaPlayed and not SirenaNowPlaying: # Тривога
                 SirenaPlay(BASE_PATH / "Sound/sirena.mp3", int(t1*60))
-            elif not Is_Alarm and r.get() == 1 and SirenaPlayed and not SirenaNowPlaying: # Відбій
+            elif not Is_Alarm and mode.get() == 1 and SirenaPlayed and not SirenaNowPlaying: # Відбій
                 SirenaPlay(BASE_PATH / "Sound/vdbj.mp3", 21)
-            elif Is_Alarm and not SirenaNowPlaying and r.get() == 2: # Сирена
+            elif Is_Alarm and not SirenaNowPlaying and mode.get() == 2: # Сирена
                 SirenaPlay(BASE_PATH / "Sound/sirena.mp3")
-            elif not Is_Alarm and SirenaNowPlaying and r.get() == 2:
+            elif not Is_Alarm and SirenaNowPlaying and mode.get() == 2:
                 pygame.mixer.music.stop()
                 SirenaNowPlaying = False
                 SirenaPlayed = False
-    except:
-        print("Помилка з'єднання!!")
-    if SirenaNowPlaying and r.get() == 1 and NowInSec() > end:
+    except Exception as err:
+        logger.exception(err)
+    if SirenaNowPlaying and mode.get() == 1 and NowInSec() > end:
         pygame.mixer.music.stop()
         SirenaNowPlaying = False
         SirenaPlayed = not SirenaPlayed
@@ -227,8 +238,8 @@ ConfigTimeAlarm = Button(alarmFrame, text="Змінити час тривоги"
 ConfigTimeAlarm.grid(row=3, column=1, sticky="W", padx=5)
 enableAlarm.grid(row=0, column=0, sticky="W", padx=5)
 
-timeAlarm1 = Radiobutton(alarmFrame, variable=r, value=1, text=f"Оголошення - {t1} хвилин", font="Arial 14", command=save)
-timeAlarm2 = Radiobutton(alarmFrame, variable=r, value=2, text="Від початку до кінця", font="Arial 14", command=save)
+timeAlarm1 = Radiobutton(alarmFrame, variable=mode, value=1, text=f"Оголошення - {t1} хвилин", font="Arial 14", command=save)
+timeAlarm2 = Radiobutton(alarmFrame, variable=mode, value=2, text="Від початку до кінця", font="Arial 14", command=save)
 minuteCheckBox = Checkbutton(alarmFrame, variable=c, text="Хвилина мовчання і гімн України", font="Arial 14", command=save)
 autoOnCheckBox = Checkbutton(alarmFrame, variable=q, text="Ввімкнення сповіщень при запуску програми", font="Arial 14", command=save)
 autoStartUpCheckBox = Checkbutton(alarmFrame, variable=w, text="Автозапуск", font="Arial 14", command=autoStartUp)

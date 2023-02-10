@@ -26,6 +26,7 @@ elif sys.platform == 'linux':
     FILENAME = 'airalarm.desktop'
 
     def enable():
+        os.makedirs(AUTOSTART_PATH, exist_ok=True)
         shutil.copy(APPS_PATH / FILENAME, AUTOSTART_PATH)
 
     def disable():
