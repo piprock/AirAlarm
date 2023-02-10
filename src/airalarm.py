@@ -1,7 +1,7 @@
 import datetime
 import json
-import logging
 import logging.handlers
+import sys
 from pathlib import Path
 from tkinter import *
 from tkinter import ttk
@@ -18,7 +18,13 @@ handler = logging.handlers.RotatingFileHandler(LOG_FILENAME, maxBytes=10*1024*10
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
-BASE_PATH = Path(__file__).parent / "data"
+if getattr(sys, 'frozen', False):
+    # Running in a PyInstaller bundle
+    RUNNING_FILE = sys.executable
+else:
+    # Running in a normal Python process
+    RUNNING_FILE = __file__
+BASE_PATH = Path(RUNNING_FILE).parent / "data"
 SETTINGS_PATH = BASE_PATH / "settings.txt"
 
 
