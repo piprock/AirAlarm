@@ -2,6 +2,7 @@ import datetime
 import json
 import logging.handlers
 import sys
+import tkinter
 from pathlib import Path
 from tkinter import *
 from tkinter import ttk
@@ -26,6 +27,7 @@ else:
     RUNNING_FILE = __file__
 BASE_PATH = Path(RUNNING_FILE).parent / "data"
 SETTINGS_PATH = BASE_PATH / "settings.txt"
+ICONS_PATH = BASE_PATH / "icons"
 
 
 def ComboChange(event):
@@ -144,6 +146,7 @@ def ChangeTimeAlarm():
 root = Tk()
 root.title("Повітряна тривога")
 root.resizable(width=False, height=False)
+root.wm_iconphoto(True, *(tkinter.PhotoImage(file=path) for path in ICONS_PATH.iterdir()))
 pygame.init()
 
 
