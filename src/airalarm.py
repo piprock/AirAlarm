@@ -2,7 +2,6 @@ import datetime
 import json
 import logging.handlers
 import sys
-import tkinter
 from pathlib import Path
 from tkinter import *
 from tkinter import ttk
@@ -146,7 +145,7 @@ def ChangeTimeAlarm():
 root = Tk()
 root.title("Повітряна тривога")
 root.resizable(width=False, height=False)
-root.wm_iconphoto(True, *(tkinter.PhotoImage(file=path) for path in ICONS_PATH.iterdir()))
+root.wm_iconphoto(True, *(PhotoImage(file=path) for path in ICONS_PATH.iterdir()))
 pygame.init()
 
 
