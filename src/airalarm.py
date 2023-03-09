@@ -169,13 +169,14 @@ SirenaNowPlaying = False
 MusicPlaying = False
 t1 = settings["t1"]
 end = 0
+lengthVdbj = int(pygame.mixer.Sound(BASE_PATH / "Sound/vdbj.mp3").get_length())
 
 
 def SirenaPlay(link, sec=1, ends=0):
     global SirenaNowPlaying, end
     pygame.mixer.music.stop()
     pygame.mixer.music.load(link)
-    pygame.mixer.music.play(9**9)
+    pygame.mixer.music.play(-1)
     SirenaNowPlaying = True
     end = NowInSec() + sec
 
@@ -197,7 +198,7 @@ def Refresh():
             if Is_Alarm and mode.get() == 1 and not SirenaPlayed and not SirenaNowPlaying: # Тривога
                 SirenaPlay(BASE_PATH / "Sound/sirena.mp3", int(t1*60))
             elif not Is_Alarm and mode.get() == 1 and SirenaPlayed and not SirenaNowPlaying: # Відбій
-                SirenaPlay(BASE_PATH / "Sound/vdbj.mp3", 21)
+                SirenaPlay(BASE_PATH / "Sound/vdbj.mp3", lengthVdbj)
             elif Is_Alarm and not SirenaNowPlaying and mode.get() == 2: # Сирена
                 SirenaPlay(BASE_PATH / "Sound/sirena.mp3")
             elif not Is_Alarm and SirenaNowPlaying and mode.get() == 2:
@@ -229,7 +230,7 @@ alarmFrame.grid(row=1, column=0, padx=10, pady=10, sticky="W")
 lb_region = Label(locFrame, text="Область", font="Impact 14")
 lb_timeAlarm = Label(alarmFrame, text="Довжина сирени", font="Impact 16")
 lb_additionalFunc = Label(alarmFrame, text="Додаткові функції", font="Impact 16")
-lb_copyright = Label(root, text="© 2022, Кір'янчук Юрій")
+lb_copyright = Label(root, text="© 2023, Кір'янчук Юрій")
 lb_region.grid(row=0, column=0, sticky="W", padx=5)
 lb_timeAlarm.grid(row=2, column=0, sticky="W", padx=5, pady=(30, 0))
 lb_additionalFunc.grid(row=6, column=0, sticky="W", padx=5, pady=(30, 0))

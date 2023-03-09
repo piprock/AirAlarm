@@ -13,7 +13,7 @@ if sys.platform == 'win32':
         bat_path = r'C:\Users\%s\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup' % USER_NAME
         with open(bat_path + '\\' + "openAiralarm.bat", "w+") as bat_file:
             bat_file.write('chcp 1251\n')
-            bat_file.write('cd %s\n' % file_path)
+            bat_file.write('cd /D %s\n' % file_path)
             bat_file.write(r'start %s' % "airalarm.exe")
 
     def disable():
