@@ -10,11 +10,13 @@ from urllib.request import Request, urlopen
 import pygame
 
 import autostart
+import regions
+from storage import State
 
 LOG_FILENAME = "airalarm.log"
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-handler = logging.handlers.RotatingFileHandler(LOG_FILENAME, maxBytes=10*1024*1024, backupCount=5)
+handler = logging.handlers.RotatingFileHandler(LOG_FILENAME, maxBytes=10 * 1024 * 1024, backupCount=5)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
@@ -30,8 +32,7 @@ ICONS_PATH = BASE_PATH / "icons"
 
 
 def ComboChange(event):
-    global city
-    city = regions_list.get()
+    STATE.region_name = regionsCombobox.get()
     save()
 
 
@@ -39,10 +40,10 @@ def save():
     with SETTINGS_PATH.open("r", encoding="utf-8") as f:
         settings = eval(f.read())
     with SETTINGS_PATH.open("w", encoding="utf-8") as f:
-        settings["city"] = city
-        settings["c"] = c.get()
+        settings["city"] = regions.IDS[STATE.region_name]
+        settings["c"] = is_minute_enabled.get()
         settings["r"] = mode.get()
-        settings["q"] = q.get()
+        settings["q"] = autoenable_notifications.get()
         settings["w"] = w.get()
         settings["t1"] = t1
         print(settings, file=f)
@@ -56,33 +57,36 @@ def autoStartUp():
     save()
 
 
-def AlarmNotification(event):
-    global alarmNotification, SirenaPlayed, SirenaNowPlaying, MusicPlaying
+def switch_notification(event):
     pygame.mixer.music.stop()
-    SirenaPlayed = False
-    SirenaNowPlaying = False
-    MusicPlaying = False
-    if alarmNotification == 0:
-        alarmNotification = 1
+    STATE.SirenaPlayed = False
+    STATE.SirenaNowPlaying = False
+    STATE.MusicPlaying = False
+    button = event.widget
+    if STATE.alarmNotification == 0:
+        STATE.alarmNotification = 1
+        STATE.reset_test_alarm()
         try:
+            # It is used to destroy window with time adjustment when this window is open and clicked button to enable
+            # alarm
             app.destroy()
         except:
             pass
-        enableAlarm.config(background="lime", text="Сповіщення ввімкнені")
+        button.config(background="lime", text="Сповіщення ввімкнені")
         timeAlarm1.config(state="disabled")
         timeAlarm2.config(state="disabled")
-        regions_list.config(state="disabled")
+        regionsCombobox.config(state="disabled")
         minuteCheckBox.config(state="disabled")
         ConfigTimeAlarm.config(state="disabled")
         autoOnCheckBox.config(state="disabled")
         autoStartUpCheckBox.config(state="disabled")
 
     else:
-        alarmNotification = 0
-        enableAlarm.config(background="pink", text="Сповіщення вимкнені")
+        STATE.alarmNotification = 0
+        button.config(background="pink", text="Сповіщення вимкнені")
         timeAlarm1.config(state="normal")
         timeAlarm2.config(state="normal")
-        regions_list.config(state="read")
+        regionsCombobox.config(state="read")
         minuteCheckBox.config(state="normal")
         ConfigTimeAlarm.config(state="normal")
         autoOnCheckBox.config(state="normal")
@@ -90,13 +94,15 @@ def AlarmNotification(event):
 
 
 def IsAlarm(City):
+    if City == regions.TEST_NAME:
+        return STATE.is_test_alarm()
     request = Request(
         "https://alerts.com.ua/api/states",
         headers={"X-API-Key": "95d44c372a0ff7220475e373ece7e0ac3362bfdc"},
     )
     with urlopen(request) as response:
         data = json.load(response)
-    states = data['states']
+    states = data["states"]
     for state in states:
         if state["name"] == City and state["alert"]:
             return True
@@ -107,7 +113,7 @@ def NowInSec():
     return int((datetime.datetime.now() - datetime.datetime(1, 1, 1, 0, 0)).total_seconds())
 
 
-def GetTime(entr1):
+def save_time(entr1):
     global t1
     try:
         t1 = int(float(entr1.get())) if int(float(entr1.get())) == float(entr1.get()) else float(entr1.get())
@@ -116,7 +122,7 @@ def GetTime(entr1):
         app.destroy()
     except:
         but.config(text="Помилка")
-        root.after(400, lambda : but.config(text="Зберегти"))
+        root.after(400, lambda: but.config(text="Зберегти"))
 
 
 def ChangeTimeAlarm():
@@ -130,10 +136,10 @@ def ChangeTimeAlarm():
     app.wm_geometry("+%d+%d" % (x, y))
 
     frame = Frame(app)
-    frame.grid(pady=10,padx=10)
+    frame.grid(pady=10, padx=10)
     lb1 = Label(frame, text="Оголошення: ", font="Arial 12")
     lb1.grid(row=0, column=0)
-    but = Button(frame, text="Зберегти", font="Arial 12", command=lambda: GetTime(entr1))
+    but = Button(frame, text="Зберегти", font="Arial 12", command=lambda: save_time(entr1))
     but.grid()
 
     entr1 = Entry(frame, width=8)
@@ -148,73 +154,66 @@ root.resizable(width=False, height=False)
 root.wm_iconphoto(True, *(PhotoImage(file=path) for path in ICONS_PATH.iterdir()))
 pygame.init()
 
-
-with (BASE_PATH / "locations_list/regions.txt").open("r", encoding="utf-8") as f:
-    regions = sorted(eval(f.read()))
-
 with SETTINGS_PATH.open("r", encoding="utf-8") as f:
     settings = eval(f.read())
 
-
 mode = IntVar()
 mode.set(settings["r"])
-c = IntVar()
-c.set(settings["c"])
-q = IntVar()
-q.set(settings["q"])
+is_minute_enabled = IntVar()
+is_minute_enabled.set(settings["c"])
+autoenable_notifications = IntVar()
+autoenable_notifications.set(settings["q"])
 w = IntVar()
 w.set(settings["w"])
-alarmNotification = 0
-city = settings["city"]
-SirenaPlayed = False
-SirenaNowPlaying = False
-MusicPlaying = False
+STATE = State(regions.NAMES[settings["city"]])
 t1 = settings["t1"]
-end = 0
 lengthVdbj = int(pygame.mixer.Sound(BASE_PATH / "Sound/vdbj.mp3").get_length())
 
 
 def SirenaPlay(link, sec=1, ends=0):
-    global SirenaNowPlaying, end
     pygame.mixer.music.stop()
     pygame.mixer.music.load(link)
     pygame.mixer.music.play(-1)
-    SirenaNowPlaying = True
-    end = NowInSec() + sec
+    STATE.SirenaNowPlaying = True
+    STATE.end = NowInSec() + sec
 
 
 def MusicOff():
-    global MusicPlaying
-    MusicPlaying = False
+    STATE.MusicPlaying = False
 
 
 def Refresh():
-    global SirenaNowPlaying, SirenaPlayed, end, MusicPlaying
     try:
-        if alarmNotification:
-            Is_Alarm = IsAlarm(city)
+        if STATE.alarmNotification:
+            Is_Alarm = IsAlarm(STATE.region_name)
             logger.debug("Are authorities signalling about air alarm now: %s", Is_Alarm)
             logger.debug("Playing siren in the beginning and in the end mode is enabled: %s", mode.get() == 1)
-            logger.debug("Has siren played already: %s", SirenaPlayed)
-            logger.debug("Is siren playing now: %s", SirenaNowPlaying)
-            if Is_Alarm and mode.get() == 1 and not SirenaPlayed and not SirenaNowPlaying: # Тривога
-                SirenaPlay(BASE_PATH / "Sound/sirena.mp3", int(t1*60))
-            elif not Is_Alarm and mode.get() == 1 and SirenaPlayed and not SirenaNowPlaying: # Відбій
+            logger.debug("Has siren played already: %s", STATE.SirenaPlayed)
+            logger.debug("Is siren playing now: %s", STATE.SirenaNowPlaying)
+            if Is_Alarm and mode.get() == 1 and not STATE.SirenaPlayed and not STATE.SirenaNowPlaying:  # Тривога
+                SirenaPlay(BASE_PATH / "Sound/sirena.mp3", int(t1 * 60))
+            elif not Is_Alarm and mode.get() == 1 and STATE.SirenaPlayed and not STATE.SirenaNowPlaying:  # Відбій
                 SirenaPlay(BASE_PATH / "Sound/vdbj.mp3", lengthVdbj)
-            elif Is_Alarm and not SirenaNowPlaying and mode.get() == 2: # Сирена
+            elif Is_Alarm and not STATE.SirenaNowPlaying and mode.get() == 2:  # Сирена
                 SirenaPlay(BASE_PATH / "Sound/sirena.mp3")
-            elif not Is_Alarm and SirenaNowPlaying and mode.get() == 2:
+            elif not Is_Alarm and STATE.SirenaNowPlaying and mode.get() == 2:
                 pygame.mixer.music.stop()
-                SirenaNowPlaying = False
-                SirenaPlayed = False
+                STATE.SirenaNowPlaying = False
+                STATE.SirenaPlayed = False
     except Exception as err:
         logger.exception(err)
-    if SirenaNowPlaying and mode.get() == 1 and NowInSec() > end:
+    if STATE.SirenaNowPlaying and mode.get() == 1 and NowInSec() > STATE.end:
         pygame.mixer.music.stop()
-        SirenaNowPlaying = False
-        SirenaPlayed = not SirenaPlayed
-    if datetime.datetime.now().hour == 9 and datetime.datetime.now().minute == 0 and not MusicPlaying and not SirenaNowPlaying and c.get() == 1:
-        MusicPlaying = True
+        STATE.SirenaNowPlaying = False
+        STATE.SirenaPlayed = not STATE.SirenaPlayed
+    if (
+            datetime.datetime.now().hour == 23
+            and datetime.datetime.now().minute == 0
+            and not STATE.MusicPlaying
+            and not STATE.SirenaNowPlaying
+            and is_minute_enabled.get() == 1
+    ):
+        STATE.MusicPlaying = True
         pygame.mixer.music.stop()
         pygame.mixer.music.load(BASE_PATH / "Sound/hvilina.mp3")
         pygame.mixer.music.play()
@@ -238,19 +237,43 @@ lb_timeAlarm.grid(row=2, column=0, sticky="W", padx=5, pady=(30, 0))
 lb_additionalFunc.grid(row=6, column=0, sticky="W", padx=5, pady=(30, 0))
 lb_copyright.grid(row=2, column=0, padx=10, pady=(50, 10), sticky="W")
 
-regions_list = ttk.Combobox(locFrame, state="readonly", width=len(max(regions, key=len)), font="Arial 14", values=regions)
-regions_list.grid(row=0, column=1, sticky="W", padx=5)
-regions_list.current(regions.index(city))
+regionsCombobox = ttk.Combobox(
+    locFrame,
+    state="readonly",
+    width=len(max(regions.LIST, key=len)),
+    font="Arial 14",
+    values=regions.LIST,
+)
+regionsCombobox.grid(row=0, column=1, sticky="W", padx=5)
+regionsCombobox.current(regions.LIST.index(STATE.region_name))
 
-enableAlarm = Button(alarmFrame, background="pink", text="Сповіщення вимкнені", font="Arial 14")
+alarmSwitchButton = Button(alarmFrame, background="pink", text="Сповіщення вимкнені", font="Arial 14")
 ConfigTimeAlarm = Button(alarmFrame, text="Змінити час тривоги", font="Arial 10", command=ChangeTimeAlarm)
 ConfigTimeAlarm.grid(row=3, column=1, sticky="W", padx=5)
-enableAlarm.grid(row=0, column=0, sticky="W", padx=5)
+alarmSwitchButton.grid(row=0, column=0, sticky="W", padx=5)
 
-timeAlarm1 = Radiobutton(alarmFrame, variable=mode, value=1, text=f"Оголошення - {t1} хвилин", font="Arial 14", command=save)
+timeAlarm1 = Radiobutton(
+    alarmFrame,
+    variable=mode,
+    value=1,
+    text=f"Оголошення - {t1} хвилин", font="Arial 14",
+    command=save,
+)
 timeAlarm2 = Radiobutton(alarmFrame, variable=mode, value=2, text="Від початку до кінця", font="Arial 14", command=save)
-minuteCheckBox = Checkbutton(alarmFrame, variable=c, text="Хвилина мовчання і гімн України", font="Arial 14", command=save)
-autoOnCheckBox = Checkbutton(alarmFrame, variable=q, text="Ввімкнення сповіщень при запуску програми", font="Arial 14", command=save)
+minuteCheckBox = Checkbutton(
+    alarmFrame,
+    variable=is_minute_enabled,
+    text="Хвилина мовчання і гімн України",
+    font="Arial 14",
+    command=save,
+)
+autoOnCheckBox = Checkbutton(
+    alarmFrame,
+    variable=autoenable_notifications,
+    text="Ввімкнення сповіщень при запуску програми",
+    font="Arial 14",
+    command=save,
+)
 autoStartUpCheckBox = Checkbutton(alarmFrame, variable=w, text="Автозапуск", font="Arial 14", command=autoStartUp)
 timeAlarm1.grid(row=3, column=0, sticky="W", padx=5)
 timeAlarm2.grid(row=4, column=0, sticky="W", padx=5)
@@ -258,12 +281,11 @@ minuteCheckBox.grid(row=7, column=0, sticky="W", padx=5)
 autoOnCheckBox.grid(row=8, column=0, sticky="W", padx=5)
 autoStartUpCheckBox.grid(row=9, column=0, sticky="W", padx=5)
 
+regionsCombobox.bind("<<ComboboxSelected>>", ComboChange)
+alarmSwitchButton.bind("<Button-1>", switch_notification)
 
-regions_list.bind("<<ComboboxSelected>>", ComboChange)
-enableAlarm.bind("<Button-1>", AlarmNotification)
-
-if q.get() == 1:
-    AlarmNotification(None)
+if autoenable_notifications.get() == 1:
+    switch_notification(None)
 
 Refresh()
 root.mainloop()
