@@ -170,10 +170,10 @@ t1 = settings["t1"]
 lengthVdbj = int(pygame.mixer.Sound(BASE_PATH / "Sound/vdbj.mp3").get_length())
 
 
-def SirenaPlay(link, sec=1, ends=0):
+def SirenaPlay(link, sec=1, count=-1):
     pygame.mixer.music.stop()
     pygame.mixer.music.load(link)
-    pygame.mixer.music.play(-1)
+    pygame.mixer.music.play(count)
     STATE.SirenaNowPlaying = True
     STATE.end = NowInSec() + sec
 
@@ -193,7 +193,7 @@ def Refresh():
             if Is_Alarm and mode.get() == 1 and not STATE.SirenaPlayed and not STATE.SirenaNowPlaying:  # Тривога
                 SirenaPlay(BASE_PATH / "Sound/sirena.mp3", int(t1 * 60))
             elif not Is_Alarm and mode.get() == 1 and STATE.SirenaPlayed and not STATE.SirenaNowPlaying:  # Відбій
-                SirenaPlay(BASE_PATH / "Sound/vdbj.mp3", lengthVdbj)
+                SirenaPlay(BASE_PATH / "Sound/vdbj.mp3", lengthVdbj, 1)
             elif Is_Alarm and not STATE.SirenaNowPlaying and mode.get() == 2:  # Сирена
                 SirenaPlay(BASE_PATH / "Sound/sirena.mp3")
             elif not Is_Alarm and STATE.SirenaNowPlaying and mode.get() == 2:
