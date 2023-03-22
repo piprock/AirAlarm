@@ -285,7 +285,9 @@ regionsCombobox.bind("<<ComboboxSelected>>", ComboChange)
 alarmSwitchButton.bind("<Button-1>", switch_notification)
 
 if autoenable_notifications.get() == 1:
-    switch_notification(None)
+    event = Event()
+    event.widget = alarmSwitchButton
+    switch_notification(event)
 
 Refresh()
 root.mainloop()
