@@ -29,6 +29,7 @@ else:
 BASE_PATH = Path(RUNNING_FILE).parent / "data"
 SETTINGS_PATH = BASE_PATH / "settings.txt"
 ICONS_PATH = BASE_PATH / "icons"
+APP_NAME = "Повітряна тривога"
 
 
 def ComboChange(event):
@@ -127,7 +128,7 @@ def save_time(entr1):
 
 def ChangeTimeAlarm():
     global app, but
-    app = Tk()
+    app = Tk(className=APP_NAME)
     app.title("Змінення часу тривоги")
     app.resizable(0, 0)
     app.update()
@@ -148,8 +149,10 @@ def ChangeTimeAlarm():
     app.mainloop()
 
 
-root = Tk()
-root.title("Повітряна тривога")
+# Use `className` parameter here to set name of the window that is visible only in linux Gnome desktop environment
+root = Tk(className=APP_NAME)
+
+root.title(APP_NAME)
 root.resizable(width=False, height=False)
 root.wm_iconphoto(True, *(PhotoImage(file=path) for path in ICONS_PATH.iterdir()))
 pygame.init()
