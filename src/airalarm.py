@@ -207,7 +207,7 @@ def Refresh():
         STATE.SirenaNowPlaying = False
         STATE.SirenaPlayed = not STATE.SirenaPlayed
     if (
-            datetime.datetime.now().hour == 23
+            datetime.datetime.now().hour == 9
             and datetime.datetime.now().minute == 0
             and not STATE.MusicPlaying
             and not STATE.SirenaNowPlaying
