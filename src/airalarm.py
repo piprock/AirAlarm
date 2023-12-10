@@ -110,7 +110,7 @@ def main():
         return int((datetime.datetime.now() - datetime.datetime(1, 1, 1, 0, 0)).total_seconds())
 
     def save_time(entr1):
-        global t1
+        nonlocal t1
         try:
             t1 = int(float(entr1.get())) if int(float(entr1.get())) == float(entr1.get()) else float(entr1.get())
             save()
